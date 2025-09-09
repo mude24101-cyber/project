@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance System - Fingerprint Authentication</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <div class="header">
+                    <i class="fas fa-fingerprint"></i>
+                    <h1>Student Attendance System</h1>
+                    <p>Biometric Authentication</p>
+                </div>
+                
+                <div class="login-options">
+                    <div class="fingerprint-section">
+                        <h2>Scan Fingerprint</h2>
+                        <div class="fingerprint-scanner" id="fingerprintScanner">
+                            <i class="fas fa-fingerprint"></i>
+                            <div class="scanner-ring"></div>
+                            <p>Place finger on scanner</p>
+                        </div>
+                        <div class="student-select">
+                            <select id="studentSelect">
+                                <option value="">Select Student (Simulation)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-login">
+                        <h3>Faculty Login</h3>
+                        <input type="text" id="adminUsername" placeholder="Username">
+                        <input type="password" id="adminPassword" placeholder="Password">
+                        <button onclick="adminLogin()">Login as Admin</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="screen">
+            <div class="admin-container">
+                <div class="admin-header">
+                    <h1><i class="fas fa-user-cog"></i> Faculty Dashboard</h1>
+                    <div class="admin-controls">
+                        <span id="adminWelcome"></span>
+                        <button onclick="logout()" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="showTab('attendance')">Mark Attendance</button>
+                    <button class="tab-btn" onclick="showTab('reports')">Reports</button>
+                    <button class="tab-btn" onclick="showTab('students')">Manage Students</button>
+                    <button class="tab-btn" onclick="showTab('defaulters')">Defaulters</button>
+                </div>
+                
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-content active">
+                    <div class="attendance-controls">
+                        <div class="control-group">
+                            <label>Subject:</label>
+                            <select id="subjectSelect">
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="English">English</option>
+                                <option value="Computer Science">Computer Science</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Date:</label>
+                            <input type="date" id="attendanceDate">
+                        </div>
+                        <button onclick="startAttendanceSession()" class="start-session-btn">
+                            <i class="fas fa-play"></i> Start Attendance Session
+                        </button>
+                    </div>
+                    
+                    <div id="attendanceSession" class="attendance-session hidden">
+                        <div class="session-info">
+                            <h3>Active Session</h3>
+                            <p><strong>Subject:</strong> <span id="currentSubject"></span></p>
+                            <p><strong>Date:</strong> <span id="currentDate"></span></p>
+                            <p><strong>Students Present:</strong> <span id="presentCount">0</span></p>
+                        </div>
+                        
+                        <div class="fingerprint-area">
+                            <div class="scanner-display">
+                                <i class="fas fa-fingerprint scanner-icon"></i>
+                                <p>Ready for fingerprint scan</p>
+                                <div class="manual-entry">
+                                    <select id="manualStudentSelect">
+                                        <option value="">Manual Entry - Select Student</option>
+                                    </select>
+                                    <button onclick="markManualAttendance()">Mark Present</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-list">
+                            <h4>Today's Attendance</h4>
+                            <div id="todaysAttendance"></div>
+                        </div>
+                        
+                        <button onclick="endAttendanceSession()" class="end-session-btn">
+                            <i class="fas fa-stop"></i> End Session
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Reports Tab -->
+                <div id="reportsTab" class="tab-content">
+                    <div class="report-controls">
+                        <div class="control-group">
+                            <label>Report Type:</label>
+                            <select id="reportType">
+                                <option value="subject">Subject-wise Report</option>
+                                <option value="date">Date-wise Report</option>
+                                <option value="student">Student-wise Report</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Subject:</label>
+                            <select id="reportSubject">
+                                <option value="all">All Subjects</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="English">English</option>
+                                <option value="Computer Science">Computer Science</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>From Date:</label>
+                            <input type="date" id="reportFromDate">
+                        </div>
+                        <div class="control-group">
+                            <label>To Date:</label>
+                            <input type="date" id="reportToDate">
+                        </div>
+                        <button onclick="generateReport()" class="generate-btn">
+                            <i class="fas fa-chart-bar"></i> Generate Report
+                        </button>
+                    </div>
+                    
+                    <div id="reportResults" class="report-results"></div>
+                </div>
+                
+                <!-- Students Tab -->
+                <div id="studentsTab" class="tab-content">
+                    <div class="student-management">
+                        <div class="add-student">
+                            <h3>Add New Student</h3>
+                            <input type="text" id="newStudentName" placeholder="Student Name">
+                            <input type="text" id="newStudentId" placeholder="Student ID">
+                            <input type="email" id="newStudentEmail" placeholder="Email">
+                            <button onclick="addStudent()">
+                                <i class="fas fa-plus"></i> Add Student
+                            </button>
+                        </div>
+                        
+                        <div class="students-list">
+                            <h3>Registered Students</h3>
+                            <div id="studentsList"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Defaulters Tab -->
+                <div id="defaultersTab" class="tab-content">
+                    <div class="defaulter-controls">
+                        <div class="control-group">
+                            <label>Minimum Attendance %:</label>
+                            <input type="number" id="attendanceThreshold" value="80" min="0" max="100">
+                        </div>
+                        <button onclick="generateDefaultersList()" class="generate-btn">
+                            <i class="fas fa-exclamation-triangle"></i> Generate Defaulters List
+                        </button>
+                    </div>
+                    
+                    <div id="defaultersList" class="defaulters-results"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Panel -->
+        <div id="studentPanel" class="screen">
+            <div class="student-container">
+                <div class="student-header">
+                    <h1><i class="fas fa-user-graduate"></i> Student Dashboard</h1>
+                    <div class="student-controls">
+                        <span id="studentWelcome"></span>
+                        <button onclick="logout()" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="student-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-check"></i>
+                        <h3>Total Classes</h3>
+                        <span id="totalClasses">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Attended</h3>
+                        <span id="attendedClasses">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-percentage"></i>
+                        <h3>Attendance %</h3>
+                        <span id="attendancePercentage">0%</span>
+                    </div>
+                </div>
+                
+                <div class="student-attendance">
+                    <h3>My Attendance History</h3>
+                    <div class="filter-controls">
+                        <select id="studentSubjectFilter">
+                            <option value="all">All Subjects</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                            <option value="English">English</option>
+                            <option value="Computer Science">Computer Science</option>
+                        </select>
+                        <button onclick="loadStudentAttendance()">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                    </div>
+                    <div id="studentAttendanceList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
