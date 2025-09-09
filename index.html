@@ -20,7 +20,8 @@
                 
                 <div class="login-options">
                     <div class="fingerprint-section">
-                        <h2>Scan Fingerprint</h2>
+                        <h2>Student Attendance</h2>
+                        <p class="instruction-text">Students: Scan your fingerprint to mark attendance</p>
                         <div class="fingerprint-scanner" id="fingerprintScanner">
                             <i class="fas fa-fingerprint"></i>
                             <div class="scanner-ring"></div>
@@ -30,6 +31,7 @@
                             <select id="studentSelect">
                                 <option value="">Select Student (Simulation)</option>
                             </select>
+                            <p class="help-text">For demo: Select your name and scan fingerprint</p>
                         </div>
                     </div>
                     
@@ -57,7 +59,7 @@
                 </div>
                 
                 <div class="admin-tabs">
-                    <button class="tab-btn active" onclick="showTab('attendance')">Mark Attendance</button>
+                    <button class="tab-btn active" onclick="showTab('attendance')">Manage Sessions</button>
                     <button class="tab-btn" onclick="showTab('reports')">Reports</button>
                     <button class="tab-btn" onclick="showTab('students')">Manage Students</button>
                     <button class="tab-btn" onclick="showTab('defaulters')">Defaulters</button>
@@ -65,25 +67,34 @@
                 
                 <!-- Attendance Tab -->
                 <div id="attendanceTab" class="tab-content active">
-                    <div class="attendance-controls">
-                        <div class="control-group">
-                            <label>Subject:</label>
-                            <select id="subjectSelect">
-                                <option value="Mathematics">Mathematics</option>
-                                <option value="Physics">Physics</option>
-                                <option value="Chemistry">Chemistry</option>
-                                <option value="Biology">Biology</option>
-                                <option value="English">English</option>
-                                <option value="Computer Science">Computer Science</option>
-                            </select>
+                    <div class="session-management">
+                        <h3>Session Management</h3>
+                        <div class="attendance-controls">
+                            <div class="control-group">
+                                <label>Subject:</label>
+                                <select id="subjectSelect">
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Physics">Physics</option>
+                                    <option value="Chemistry">Chemistry</option>
+                                    <option value="Biology">Biology</option>
+                                    <option value="English">English</option>
+                                    <option value="Computer Science">Computer Science</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Date:</label>
+                                <input type="date" id="attendanceDate">
+                            </div>
+                            <button onclick="startAttendanceSession()" class="start-session-btn">
+                                <i class="fas fa-play"></i> Create New Session
+                            </button>
                         </div>
-                        <div class="control-group">
-                            <label>Date:</label>
-                            <input type="date" id="attendanceDate">
+                        
+                        <div class="active-sessions">
+                            <h4>Active Sessions</h4>
+                            <p class="info-text">Students can mark attendance for these active sessions</p>
+                            <div id="activeSessionsList"></div>
                         </div>
-                        <button onclick="startAttendanceSession()" class="start-session-btn">
-                            <i class="fas fa-play"></i> Start Attendance Session
-                        </button>
                     </div>
                     
                     <div id="attendanceSession" class="attendance-session hidden">
@@ -94,16 +105,14 @@
                             <p><strong>Students Present:</strong> <span id="presentCount">0</span></p>
                         </div>
                         
-                        <div class="fingerprint-area">
-                            <div class="scanner-display">
-                                <i class="fas fa-fingerprint scanner-icon"></i>
-                                <p>Ready for fingerprint scan</p>
-                                <div class="manual-entry">
-                                    <select id="manualStudentSelect">
-                                        <option value="">Manual Entry - Select Student</option>
-                                    </select>
-                                    <button onclick="markManualAttendance()">Mark Present</button>
-                                </div>
+                        <div class="manual-entry-section">
+                            <h4>Manual Entry (Emergency Use Only)</h4>
+                            <p class="help-text">Use only when fingerprint scanner is not working</p>
+                            <div class="manual-entry">
+                                <select id="manualStudentSelect">
+                                    <option value="">Manual Entry - Select Student</option>
+                                </select>
+                                <button onclick="markManualAttendance()">Mark Present Manually</button>
                             </div>
                         </div>
                         

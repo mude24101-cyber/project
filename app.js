@@ -132,10 +132,19 @@ class AttendanceSystem {
     }
 
     authenticateStudent(student) {
-        this.currentUser = student;
-        this.showScreen('studentPanel');
-        this.loadStudentDashboard();
-        document.getElementById('studentWelcome').textContent = `Welcome, ${student.name}`;
+        // Check if there's an active session for marking attendance
+        const activeSessions = this.getActiveSessions();
+        
+        if (activeSessions.length > 0) {
+            // Try to mark attendance for active sessions
+            this.markStudentAttendance(student, activeSessions);
+        } else {
+            // No active session, go to student dashboard
+            this.currentUser = student;
+            this.showScreen('studentPanel');
+            this.loadStudentDashboard();
+            document.getElementById('studentWelcome').textContent = `Welcome, ${student.name}`;
+        }
     }
 
     getStudents() {
@@ -150,6 +159,51 @@ class AttendanceSystem {
         const records = this.getAttendanceRecords();
         records.push(record);
         localStorage.setItem('attendanceRecords', JSON.stringify(records));
+    }
+
+    getActiveSessions() {
+        return JSON.parse(localStorage.getItem('activeSessions') || '[]');
+    }
+
+    saveActiveSessions(sessions) {
+        localStorage.setItem('activeSessions', JSON.stringify(sessions));
+    }
+
+    markStudentAttendance(student, activeSessions) {
+        const records = this.getAttendanceRecords();
+        let markedCount = 0;
+        
+        activeSessions.forEach(session => {
+            // Check if student already marked for this session
+            const existingRecord = records.find(r => 
+                r.studentId === student.id && 
+                r.subject === session.subject && 
+                r.date === session.date
+            );
+            
+            if (!existingRecord) {
+                const attendanceRecord = {
+                    studentId: student.id,
+                    studentName: student.name,
+                    subject: session.subject,
+                    date: session.date,
+                    time: new Date().toLocaleTimeString(),
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.saveAttendanceRecord(attendanceRecord);
+                markedCount++;
+            }
+        });
+        
+        if (markedCount > 0) {
+            alert(`Attendance marked successfully for ${student.name}!\nMarked present for ${markedCount} session(s).`);
+        } else {
+            alert(`Welcome ${student.name}!\nYou are already marked present for all active sessions.`);
+        }
+        
+        // Reset the form
+        document.getElementById('studentSelect').value = '';
     }
 
     showScreen(screenId) {
@@ -279,18 +333,38 @@ function startAttendanceSession() {
         return;
     }
     
-    attendanceSystem.isSessionActive = true;
-    attendanceSystem.currentSession = {
+    // Check if session already exists
+    const activeSessions = attendanceSystem.getActiveSessions();
+    const existingSession = activeSessions.find(s => s.subject === subject && s.date === date);
+    
+    if (existingSession) {
+        alert('A session for this subject and date is already active');
+        return;
+    }
+    
+    // Create new session
+    const newSession = {
+        id: Date.now(),
         subject,
         date,
-        attendees: []
+        startTime: new Date().toISOString(),
+        status: 'active'
     };
+    
+    activeSessions.push(newSession);
+    attendanceSystem.saveActiveSessions(activeSessions);
+    
+    attendanceSystem.isSessionActive = true;
+    attendanceSystem.currentSession = newSession;
     
     document.getElementById('currentSubject').textContent = subject;
     document.getElementById('currentDate').textContent = new Date(date).toLocaleDateString();
-    document.getElementById('presentCount').textContent = '0';
     document.getElementById('attendanceSession').classList.remove('hidden');
-    document.getElementById('todaysAttendance').innerHTML = '';
+    
+    alert(`Attendance session started for ${subject} on ${new Date(date).toLocaleDateString()}.\nStudents can now mark their attendance using the fingerprint scanner.`);
+    
+    updateAttendanceDisplay();
+    loadActiveSessionsList();
 }
 
 function markManualAttendance() {
@@ -312,7 +386,13 @@ function markManualAttendance() {
     }
     
     // Check if already marked present
-    const existing = attendanceSystem.currentSession.attendees.find(a => a.studentId === studentId);
+    const records = attendanceSystem.getAttendanceRecords();
+    const existing = records.find(r => 
+        r.studentId === studentId && 
+        r.subject === attendanceSystem.currentSession.subject && 
+        r.date === attendanceSystem.currentSession.date
+    );
+    
     if (existing) {
         alert('Student already marked present');
         return;
@@ -329,30 +409,29 @@ function markManualAttendance() {
     };
     
     attendanceSystem.saveAttendanceRecord(attendanceRecord);
-    attendanceSystem.currentSession.attendees.push(attendanceRecord);
     
     // Update UI
     updateAttendanceDisplay();
     document.getElementById('manualStudentSelect').value = '';
     
-    // Show success feedback
-    const scanner = document.querySelector('.scanner-display p');
-    const originalText = scanner.textContent;
-    scanner.textContent = `✓ ${student.name} marked present`;
-    scanner.style.color = '#28a745';
-    
-    setTimeout(() => {
-        scanner.textContent = originalText;
-        scanner.style.color = '';
-    }, 2000);
+    alert(`${student.name} marked present manually`);
 }
 
 function updateAttendanceDisplay() {
-    const count = attendanceSystem.currentSession.attendees.length;
-    document.getElementById('presentCount').textContent = count;
+    if (!attendanceSystem.currentSession) {
+        return;
+    }
+    
+    const records = attendanceSystem.getAttendanceRecords();
+    const sessionRecords = records.filter(r => 
+        r.subject === attendanceSystem.currentSession.subject && 
+        r.date === attendanceSystem.currentSession.date
+    );
+    
+    document.getElementById('presentCount').textContent = sessionRecords.length;
     
     const attendanceList = document.getElementById('todaysAttendance');
-    attendanceList.innerHTML = attendanceSystem.currentSession.attendees.map(record => `
+    attendanceList.innerHTML = sessionRecords.map(record => `
         <div class="attendance-item">
             <div>
                 <strong>${record.studentName}</strong> (${record.studentId})
@@ -368,12 +447,28 @@ function endAttendanceSession() {
         return;
     }
     
-    const count = attendanceSystem.currentSession.attendees.length;
-    alert(`Attendance session ended. ${count} students marked present.`);
+    // Mark session as ended
+    const activeSessions = attendanceSystem.getActiveSessions();
+    const sessionIndex = activeSessions.findIndex(s => s.id === attendanceSystem.currentSession.id);
+    
+    if (sessionIndex !== -1) {
+        activeSessions[sessionIndex].status = 'ended';
+        activeSessions[sessionIndex].endTime = new Date().toISOString();
+        attendanceSystem.saveActiveSessions(activeSessions.filter(s => s.status === 'active'));
+    }
+    
+    const records = attendanceSystem.getAttendanceRecords();
+    const sessionRecords = records.filter(r => 
+        r.subject === attendanceSystem.currentSession.subject && 
+        r.date === attendanceSystem.currentSession.date
+    );
+    
+    alert(`Attendance session ended for ${attendanceSystem.currentSession.subject}.\n${sessionRecords.length} students marked present.`);
     
     attendanceSystem.isSessionActive = false;
     attendanceSystem.currentSession = null;
     document.getElementById('attendanceSession').classList.add('hidden');
+    loadActiveSessionsList();
 }
 
 // Reports Generation
@@ -715,6 +810,70 @@ function generateDefaultersList() {
     defaultersDiv.innerHTML = html;
 }
 
+// Load active sessions list
+function loadActiveSessionsList() {
+    const activeSessions = attendanceSystem.getActiveSessions();
+    const sessionsList = document.getElementById('activeSessionsList');
+    
+    if (!sessionsList) return;
+    
+    if (activeSessions.length === 0) {
+        sessionsList.innerHTML = '<p>No active sessions</p>';
+        return;
+    }
+    
+    sessionsList.innerHTML = activeSessions.map(session => {
+        const records = attendanceSystem.getAttendanceRecords();
+        const sessionAttendance = records.filter(r => 
+            r.subject === session.subject && r.date === session.date
+        );
+        
+        return `
+            <div class="session-item">
+                <div class="session-info">
+                    <h4>${session.subject}</h4>
+                    <p>Date: ${new Date(session.date).toLocaleDateString()}</p>
+                    <p>Started: ${new Date(session.startTime).toLocaleTimeString()}</p>
+                    <p class="success">Students Present: ${sessionAttendance.length}</p>
+                </div>
+                <button onclick="viewSessionDetails('${session.id}')" class="view-btn">
+                    View Details
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function viewSessionDetails(sessionId) {
+    const activeSessions = attendanceSystem.getActiveSessions();
+    const session = activeSessions.find(s => s.id == sessionId);
+    
+    if (!session) {
+        alert('Session not found');
+        return;
+    }
+    
+    const records = attendanceSystem.getAttendanceRecords();
+    const sessionAttendance = records.filter(r => 
+        r.subject === session.subject && r.date === session.date
+    );
+    
+    let details = `Session Details:\n`;
+    details += `Subject: ${session.subject}\n`;
+    details += `Date: ${new Date(session.date).toLocaleDateString()}\n`;
+    details += `Started: ${new Date(session.startTime).toLocaleTimeString()}\n`;
+    details += `Students Present: ${sessionAttendance.length}\n\n`;
+    
+    if (sessionAttendance.length > 0) {
+        details += `Attendance List:\n`;
+        sessionAttendance.forEach((record, index) => {
+            details += `${index + 1}. ${record.studentName} (${record.studentId}) - ${record.time}\n`;
+        });
+    }
+    
+    alert(details);
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Set default dates to today
@@ -725,4 +884,9 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = today;
         }
     });
+    
+    // Load active sessions if on admin panel
+    setTimeout(() => {
+        loadActiveSessionsList();
+    }, 500);
 });

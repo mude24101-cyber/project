@@ -685,3 +685,100 @@ body {
         background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
     }
 }
+
+/* New styles for updated workflow */
+.instruction-text {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.help-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.info-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.session-management {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.active-sessions {
+    margin-top: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+}
+
+.session-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.session-info h4 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+}
+
+.session-info p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.view-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.manual-entry-section {
+    background: #fff3cd;
+    border: 2px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.manual-entry-section h4 {
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.manual-entry-section .help-text {
+    color: #856404;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
