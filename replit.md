@@ -35,8 +35,9 @@ Preferred communication style: Simple, everyday language.
 - **Admin Dashboard**: Comprehensive faculty interface for student management and attendance tracking
 
 ### Application Flow
-- **Student Flow**: Fingerprint scan → identity verification → attendance recording
-- **Faculty Flow**: Username/password login → dashboard access → student/session management
+- **Student Self-Service**: Students scan fingerprint → automatic attendance marking for active sessions
+- **Faculty Session Management**: Faculty create and monitor attendance sessions → students mark their own attendance
+- **Real-time Monitoring**: Faculty can view attendance in real-time as students scan their fingerprints
 - **Data Persistence**: All actions immediately saved to localStorage for data retention
 
 ## External Dependencies
