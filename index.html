@@ -37,9 +37,12 @@
                     
                     <div class="admin-login">
                         <h3>Faculty Login</h3>
-                        <input type="text" id="adminUsername" placeholder="Username">
+                        <select id="adminSelect">
+                            <option value="">Select Admin</option>
+                        </select>
                         <input type="password" id="adminPassword" placeholder="Password">
                         <button onclick="adminLogin()">Login as Admin</button>
+                        <p class="help-text">If your admin account isn't listed, create one from the Admins tab after logging in with an existing admin.</p>
                     </div>
                 </div>
             </div>
@@ -63,6 +66,7 @@
                     <button class="tab-btn" onclick="showTab('reports')">Reports</button>
                     <button class="tab-btn" onclick="showTab('students')">Manage Students</button>
                     <button class="tab-btn" onclick="showTab('defaulters')">Defaulters</button>
+                    <button class="tab-btn" onclick="showTab('admins')">Admins</button>
                 </div>
                 
                 <!-- Attendance Tab -->
@@ -73,12 +77,11 @@
                             <div class="control-group">
                                 <label>Subject:</label>
                                 <select id="subjectSelect">
-                                    <option value="Mathematics">Mathematics</option>
-                                    <option value="Physics">Physics</option>
-                                    <option value="Chemistry">Chemistry</option>
-                                    <option value="Biology">Biology</option>
-                                    <option value="English">English</option>
-                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="dsa">DSA</option>
+                                    <option value="dbms">DBMS</option>
+                                    <option value="aiml">AIML</option>
+                                    <option value="rl">RL</option>
+                                    <option value="iot">IOT</option>
                                 </select>
                             </div>
                             <div class="control-group">
@@ -142,12 +145,11 @@
                             <label>Subject:</label>
                             <select id="reportSubject">
                                 <option value="all">All Subjects</option>
-                                <option value="Mathematics">Mathematics</option>
-                                <option value="Physics">Physics</option>
-                                <option value="Chemistry">Chemistry</option>
-                                <option value="Biology">Biology</option>
-                                <option value="English">English</option>
-                                <option value="Computer Science">Computer Science</option>
+                                <option value="dsa">DSA</option>
+                                <option value="dbms">DBMS</option>
+                                <option value="aiml">AIML</option>
+                                <option value="rl">RL</option>
+                                <option value="iot">IOT</option>
                             </select>
                         </div>
                         <div class="control-group">
@@ -200,6 +202,23 @@
                     
                     <div id="defaultersList" class="defaulters-results"></div>
                 </div>
+
+                <!-- Admins Tab -->
+                <div id="adminsTab" class="tab-content">
+                    <div class="admin-management">
+                        <h3>Manage Admin Accounts</h3>
+                        <div class="add-admin">
+                            <input type="text" id="newAdminUsername" placeholder="Username">
+                            <input type="password" id="newAdminPassword" placeholder="Password">
+                            <button onclick="addAdmin()"><i class="fas fa-user-plus"></i> Add Admin</button>
+                        </div>
+
+                        <div class="admins-list">
+                            <h4>Registered Admins</h4>
+                            <div id="adminsList"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -239,12 +258,11 @@
                     <div class="filter-controls">
                         <select id="studentSubjectFilter">
                             <option value="all">All Subjects</option>
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Physics">Physics</option>
-                            <option value="Chemistry">Chemistry</option>
-                            <option value="Biology">Biology</option>
-                            <option value="English">English</option>
-                            <option value="Computer Science">Computer Science</option>
+                            <option value="dsa">DSA</option>
+                            <option value="dbms">DBMS</option>
+                            <option value="aiml">AIML</option>
+                            <option value="rl">RL</option>
+                            <option value="iot">IOT</option>
                         </select>
                         <button onclick="loadStudentAttendance()">
                             <i class="fas fa-search"></i> Filter
