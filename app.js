@@ -17,11 +17,10 @@ class AttendanceSystem {
     initializeDefaultData() {
         // Initialize default admin credentials
         if (!localStorage.getItem('adminCredentials')) {
-            const defaultAdmin = {
-                username: 'admin',
-                password: 'admin123'
-            };
-            localStorage.setItem('adminCredentials', JSON.stringify(defaultAdmin));
+            const defaultAdmins = [
+                { username: 'admin', password: 'admin123' }
+            ];
+            localStorage.setItem('adminCredentials', JSON.stringify(defaultAdmins));
         }
 
         // Initialize default students if none exist
@@ -106,6 +105,15 @@ class AttendanceSystem {
                 manualStudentSelect.appendChild(option);
             });
         }
+    }
+
+    // Admin helpers
+    getAdmins() {
+        return JSON.parse(localStorage.getItem('adminCredentials') || '[]');
+    }
+
+    saveAdmins(admins) {
+        localStorage.setItem('adminCredentials', JSON.stringify(admins));
     }
 
     simulateFingerprintScan() {
@@ -281,19 +289,28 @@ const attendanceSystem = new AttendanceSystem();
 
 // Admin Authentication
 function adminLogin() {
-    const username = document.getElementById('adminUsername').value;
+    const adminSelect = document.getElementById('adminSelect');
+    const username = adminSelect ? adminSelect.value : '';
     const password = document.getElementById('adminPassword').value;
-    
-    const credentials = JSON.parse(localStorage.getItem('adminCredentials'));
-    
-    if (username === credentials.username && password === credentials.password) {
+
+    if (!username) {
+        alert('Please select an admin account');
+        return;
+    }
+
+    const admins = attendanceSystem.getAdmins();
+    const admin = admins.find(a => a.username === username);
+
+    if (admin && admin.password === password) {
         attendanceSystem.currentUser = { type: 'admin', username };
         attendanceSystem.showScreen('adminPanel');
         document.getElementById('adminWelcome').textContent = `Welcome, ${username}`;
         loadStudentsList();
         refreshManualStudentSelect();
+        loadActiveSessionsList();
+        populateAdminsList();
     } else {
-        alert('Invalid credentials. Use: admin / admin123');
+        alert('Invalid credentials.');
     }
 }
 
@@ -304,7 +321,8 @@ function logout() {
     attendanceSystem.currentSession = null;
     
     // Clear form fields
-    document.getElementById('adminUsername').value = '';
+    const adminSelect = document.getElementById('adminSelect');
+    if (adminSelect) adminSelect.value = '';
     document.getElementById('adminPassword').value = '';
     document.getElementById('studentSelect').value = '';
     
@@ -312,6 +330,85 @@ function logout() {
     document.getElementById('attendanceSession').classList.add('hidden');
     
     attendanceSystem.showScreen('loginScreen');
+}
+
+// Populate admin select on login screen
+function populateAdminSelect() {
+    const admins = attendanceSystem.getAdmins();
+    const adminSelect = document.getElementById('adminSelect');
+    if (!adminSelect) return;
+
+    adminSelect.innerHTML = '<option value="">Select Admin</option>';
+    admins.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.username;
+        opt.textContent = a.username;
+        adminSelect.appendChild(opt);
+    });
+}
+
+// Admin management functions
+function addAdmin() {
+    const username = document.getElementById('newAdminUsername').value.trim();
+    const password = document.getElementById('newAdminPassword').value.trim();
+
+    if (!username || !password) {
+        alert('Please enter username and password');
+        return;
+    }
+
+    const admins = attendanceSystem.getAdmins();
+    if (admins.find(a => a.username === username)) {
+        alert('Admin username already exists');
+        return;
+    }
+
+    admins.push({ username, password });
+    attendanceSystem.saveAdmins(admins);
+
+    document.getElementById('newAdminUsername').value = '';
+    document.getElementById('newAdminPassword').value = '';
+
+    populateAdminSelect();
+    populateAdminsList();
+
+    alert('Admin added successfully');
+}
+
+function deleteAdmin(username) {
+    const admins = attendanceSystem.getAdmins();
+    if (admins.length <= 1) {
+        alert('Cannot delete the last admin account. At least one admin must exist.');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete admin '${username}'?`)) return;
+
+    let updated = admins.filter(a => a.username !== username);
+    attendanceSystem.saveAdmins(updated);
+
+    populateAdminSelect();
+    populateAdminsList();
+}
+
+function populateAdminsList() {
+    const admins = attendanceSystem.getAdmins();
+    const container = document.getElementById('adminsList');
+    if (!container) return;
+
+    if (admins.length === 0) {
+        container.innerHTML = '<p>No admin accounts found.</p>';
+        return;
+    }
+
+    container.innerHTML = admins.map(a => `
+        <div class="admin-item">
+            <div class="admin-info">${a.username}</div>
+            <div>
+                <button class="delete-btn" onclick="deleteAdmin('${a.username}')"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Tab Management
@@ -889,4 +986,16 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         loadActiveSessionsList();
     }, 500);
+    // Populate admin select on load
+    populateAdminSelect();
 });
+
+// Ensure admins list refreshed when admin panel is shown
+const originalShowScreen = attendanceSystem.showScreen.bind(attendanceSystem);
+attendanceSystem.showScreen = function(screenId) {
+    originalShowScreen(screenId);
+    if (screenId === 'adminPanel') {
+        populateAdminsList();
+        loadActiveSessionsList();
+    }
+};
